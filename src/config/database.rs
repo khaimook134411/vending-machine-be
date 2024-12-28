@@ -1,10 +1,16 @@
-use postgres::{Client, Error, NoTls};
+use tokio_postgres::{NoTls, Error, Client};
 
-pub fn db_connect() -> Result<Client, Error> {
-    let mut client = Client::connect(
-        "postgres://postgres:password@localhost:5433/vending_machine",
+pub async fn db_connect() -> Result<Client, Error> {
+    let (client, connection) = tokio_postgres::connect(
+        "host=localhost user=postgres password=password dbname=vending_machine port=5433",
         NoTls,
-    );
+    ).await?;
 
-    client
+    tokio::spawn(async move {
+        if let Err(e) = connection.await {
+            eprintln!("Connection error: {}", e);
+        }
+    });
+
+    Ok(client)
 }
