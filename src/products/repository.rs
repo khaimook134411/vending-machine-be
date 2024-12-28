@@ -7,7 +7,7 @@ pub async fn create_product(req: InsertProductRequest)-> Result<ObjectId, String
         Ok(mut client) => {
             let id = ObjectId::new();
             let query = "
-                INSERT INTO products (id, title, description, price, quantity, image_url)
+                INSERT INTO products (id, title, description, price, quantity, image_url, deleted)
                 VALUES ($1, $2, $3, $4, $5, $6);
             ";
 
@@ -20,6 +20,7 @@ pub async fn create_product(req: InsertProductRequest)-> Result<ObjectId, String
                     &req.price,
                     &req.quantity,
                     &req.image_uri,
+                    &req.deleted,
                 ],
             ).await {
                 Ok(..) => {

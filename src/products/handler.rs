@@ -16,6 +16,7 @@ pub async fn create_product_router(Json(req): Json<InsertProductRequest>
         price: req.price.clone(),
         quantity: req.quantity.clone(),
         image_uri: req.image_uri.clone(),
+        deleted: req.deleted.clone(),
     }).await {
         Ok(id) => {
             Ok(Json(InsertProductResponse {

@@ -10,6 +10,7 @@ pub struct Product {
     pub price: f32,
     pub quantity: f32,
     pub image_uri: Option<String>,
+    pub deleted: bool,
     pub created_at: String,
     pub updated_at: String,
 }
@@ -23,6 +24,7 @@ pub struct ProductBson {
     pub price: f32,
     pub quantity: f32,
     pub image_uri: Option<String>,
+    pub deleted: bool,
     pub created_at: String,
     pub updated_at: String,
 }
@@ -35,7 +37,7 @@ pub struct InsertProductRequest {
     pub price: f64,
     pub quantity: i32,
     pub image_uri: Option<String>,
-
+    pub deleted: bool,
 }
 
 #[derive(Serialize)]
@@ -53,6 +55,7 @@ impl Product {
             price: 0.0,
             quantity: 0.0,
             image_uri: None,
+            deleted: false,
             created_at: "".to_string(),
             updated_at: "".to_string(),
         }

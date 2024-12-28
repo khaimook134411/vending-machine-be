@@ -26,6 +26,7 @@ pub async fn init_database() {
                 price DOUBLE PRECISION,
                 quantity INTEGER,
                 image_url VARCHAR(255),
+                deleted BOOLEAN,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );", &[]).await.expect("cannot create postgres connection");
