@@ -4,6 +4,29 @@ use crate::repositories::products::get_product;
 use bson::oid::ObjectId;
 use chrono::Utc;
 
+pub async fn get_order(id: String) -> Result<Order, String> {
+    match db_connect().await {
+        Ok(client) => {
+            let query = "SELECT * FROM orders WHERE id = $1";
+
+            match client.query_one(query, &[&id]).await {
+                Ok(row) => {
+                    let order = Order {
+                        id,
+                        product_id: row.get("product_id"),
+                        quantity: row.get("quantity"),
+                        total: row.get("total"),
+                        status: row.get("status"),
+                    };
+
+                    Ok(order)
+                }
+                Err(e) => Err(format!("Order not found: {}", e)),
+            }
+        }
+        Err(e) => Err(e.to_string()),
+    }
+}
 pub async fn get_orders() -> Result<Vec<Order>, String> {
     match db_connect().await {
         Ok(client) => {

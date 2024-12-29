@@ -1,12 +1,19 @@
 use crate::entities::orders::{
     CancelOrderRequest, CancelOrderResponse, CreateOrderRequest, CreateOrderResponse,
 };
-use crate::repositories::orders::{cancel_order, create_order, get_orders};
+use crate::repositories::orders::{cancel_order, create_order, get_order, get_orders};
 use axum::http::StatusCode;
 use axum::{
-    extract::Json,
+    extract::{Json, Path},
     response::{IntoResponse, Response},
 };
+
+pub async fn get_order_router(Path(id): Path<String>)-> Result<Response, StatusCode>{
+    match get_order(id).await {
+        Ok(order) => Ok(Json(order).into_response()),
+        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+    }
+}
 
 pub async fn get_orders_router() -> Result<Response, StatusCode> {
     match get_orders().await {
