@@ -4,13 +4,14 @@ pub async fn init_database() {
     let client = db_connect();
 
     match client.await {
-        Ok(mut client) => {
+        Ok(client) => {
             // Create the `categories` table
             client.execute("
             CREATE TABLE IF NOT EXISTS categories (
                 id VARCHAR(255) PRIMARY KEY,
                 title VARCHAR(255) NOT NULL,
                 description TEXT,
+                deleted BOOLEAN,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );

@@ -6,15 +6,7 @@ pub struct Category {
     pub id: String,
     pub title: String,
     pub description: Option<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct CategoryBson {
-    pub id: ObjectId,
-    pub title: String,
-    pub description: Option<String>,
-    pub created_at: String,
-    pub updated_at: String,
+    pub deleted: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -23,8 +15,16 @@ pub struct InsertCategoryRequest {
     pub description: Option<String>,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdateCategoryRequest {
+    pub id: String,
+    pub title: Option<String>,
+    pub description: Option<String>,
+    pub deleted: Option<bool>,
+}
+
 #[derive(Serialize)]
-pub struct InsertCategoryResponse {
+pub struct CategoryResponse {
     pub id: ObjectId,
 }
 
@@ -34,6 +34,7 @@ impl Category {
             id: "".to_string(),
             title: "".to_string(),
             description: None,
+            deleted: false,
         }
     }
 }

@@ -1,13 +1,13 @@
 use bson::oid::ObjectId;
 use crate::config::database::db_connect;
-use crate::products::entity::InsertProductRequest;
+use crate::entities::products::InsertProductRequest;
 
-pub async fn create_product(req: InsertProductRequest)-> Result<ObjectId, String>{
-  match db_connect().await {
-        Ok(mut client) => {
+pub async fn create_product(req: InsertProductRequest) -> Result<ObjectId, String>{
+    match db_connect().await {
+        Ok(client) => {
             let id = ObjectId::new();
             let query = "
-                INSERT INTO products (id, title, description, price, quantity, image_url, deleted)
+                INSERT INTO products (id, title, description, price, quantity, image_url)
                 VALUES ($1, $2, $3, $4, $5, $6);
             ";
 
@@ -20,7 +20,6 @@ pub async fn create_product(req: InsertProductRequest)-> Result<ObjectId, String
                     &req.price,
                     &req.quantity,
                     &req.image_uri,
-                    &req.deleted,
                 ],
             ).await {
                 Ok(..) => {

@@ -3,8 +3,8 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use axum::http::StatusCode;
-use crate::products::entity::{InsertProductRequest, InsertProductResponse};
-use crate::products::repository::create_product;
+use crate::entities::products::{InsertProductRequest, InsertProductResponse};
+use crate::repositories::products::create_product;
 
 pub async fn create_product_router(Json(req): Json<InsertProductRequest>
 ) -> Result<Response, StatusCode> {
@@ -16,7 +16,6 @@ pub async fn create_product_router(Json(req): Json<InsertProductRequest>
         price: req.price.clone(),
         quantity: req.quantity.clone(),
         image_uri: req.image_uri.clone(),
-        deleted: req.deleted.clone(),
     }).await {
         Ok(id) => {
             Ok(Json(InsertProductResponse {

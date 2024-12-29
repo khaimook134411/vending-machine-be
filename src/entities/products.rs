@@ -37,7 +37,6 @@ pub struct InsertProductRequest {
     pub price: f64,
     pub quantity: i32,
     pub image_uri: Option<String>,
-    pub deleted: bool,
 }
 
 #[derive(Serialize)]

@@ -1,10 +1,15 @@
 pub mod config;
-pub mod products;
 mod init_database;
-pub mod categories;
+mod entities;
+mod repositories;
+mod handlers;
 
 use axum::{http::Method, routing::{get, post}, Router};
 use tower_http::cors::{Any, CorsLayer};
+use bluepi_assignment_be::handlers::categories::{get_categories_router, update_category_router};
+use crate::handlers::categories::create_category_router;
+use crate::handlers::products::create_product_router;
+use crate::repositories::categories::update_category;
 
 // #[tokio::main]
 async fn start_server() {
@@ -16,9 +21,10 @@ async fn start_server() {
             Method::PUT,
             Method::PATCH,
         ]))
-        .route("/categories", get(categories::handler::get_categories_router))
-        .route("/category/create", post(categories::handler::create_category_router))
-        .route("/product/create", post(products::handler::create_product_router))
+        .route("/categories", get(get_categories_router))
+        .route("/category/create", post(create_category_router))
+        .route("/category/update", post(update_category_router))
+        .route("/product/create", post(create_product_router))
         .route("/", get(|| async { "Hello, World!" }));
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
