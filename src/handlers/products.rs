@@ -1,10 +1,17 @@
 use crate::entities::products::{InsertProductRequest, ProductResponse, UpdateProductRequest};
-use crate::repositories::products::{create_product, get_products, update_product};
+use crate::repositories::products::{create_product, get_product, get_products, update_product};
 use axum::http::StatusCode;
 use axum::{
-    extract::Json,
+    extract::{Json, Path},
     response::{IntoResponse, Response},
 };
+
+pub async fn get_product_router(Path(id): Path<String>) -> Result<Response, StatusCode> {
+    match get_product(id).await {
+        Ok(product) => Ok(Json(product).into_response()),
+        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+    }
+}
 
 pub async fn get_products_router() -> Result<Response, StatusCode> {
     match get_products().await {

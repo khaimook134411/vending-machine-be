@@ -5,6 +5,43 @@ use chrono::{DateTime, Utc};
 use std::fmt::Debug;
 use std::time::SystemTime;
 
+pub async fn get_product(id: String) -> Result<Product, String> {
+    match db_connect().await {
+        Ok(client) => {
+            let query = "SELECT * FROM products WHERE id = $1";
+
+            match client.query_one(query, &[&id]).await {
+                Ok(row) => {
+                    let product = Product {
+                        id: row.get("id"),
+                        title: row.get("title"),
+                        category_id: row.get("category_id"),
+                        description: row.get("description"),
+                        price: row.get("price"),
+                        quantity: row.get("quantity"),
+                        image_uri: row.get("image_uri"),
+                        deleted: row.get("deleted"),
+                        created_at: {
+                            let system_time: SystemTime = row.get("created_at");
+                            let datetime: DateTime<Utc> = system_time.into(); // Convert to DateTime<Utc>
+                            datetime.to_rfc3339() // Convert to ISO 8601 string
+                        },
+                        updated_at: {
+                            let system_time: SystemTime = row.get("updated_at");
+                            let datetime: DateTime<Utc> = system_time.into();
+                            datetime.to_rfc3339()
+                        },
+                    };
+
+                    Ok(product)
+                }
+                Err(e) => Err(format!("Product not found: {}", e)),
+            }
+        }
+        Err(e) => Err(e.to_string()),
+    }
+}
+
 pub async fn get_products() -> Result<Vec<Product>, String> {
     match db_connect().await {
         Ok(client) => {

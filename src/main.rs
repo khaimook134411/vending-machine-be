@@ -9,7 +9,7 @@ use tower_http::cors::{Any, CorsLayer};
 use bluepi_assignment_be::handlers::categories::{get_categories_router, update_category_router};
 use bluepi_assignment_be::repositories::products::get_products;
 use crate::handlers::categories::create_category_router;
-use crate::handlers::products::{create_product_router, get_products_router, update_product_router};
+use crate::handlers::products::{create_product_router, get_product_router, get_products_router, update_product_router};
 use crate::repositories::categories::update_category;
 
 // #[tokio::main]
@@ -26,6 +26,7 @@ async fn start_server() {
         .route("/category/create", post(create_category_router))
         .route("/category/update", post(update_category_router))
         .route("/products", get(get_products_router))
+        .route("/products/:id", get(get_product_router))
         .route("/product/create", post(create_product_router))
         .route("/product/update", post(update_product_router))
         .route("/", get(|| async { "Hello, World!" }));
