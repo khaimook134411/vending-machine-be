@@ -6,7 +6,9 @@ pub async fn init_database() {
     match client.await {
         Ok(client) => {
             // Create the `categories` table
-            client.execute("
+            client
+                .execute(
+                    "
             CREATE TABLE IF NOT EXISTS categories (
                 id VARCHAR(255) PRIMARY KEY,
                 title VARCHAR(255) NOT NULL,
@@ -14,11 +16,16 @@ pub async fn init_database() {
                 deleted BOOLEAN,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-        ", &[]).await.expect("cannot create categories table");
+            );",
+                    &[],
+                )
+                .await
+                .expect("cannot create categories table");
 
             // Create the `products` table
-            client.execute("
+            client
+                .execute(
+                    "
               CREATE TABLE IF NOT EXISTS products (
                 id VARCHAR(255) PRIMARY KEY,
                 category_id VARCHAR(255),
@@ -30,8 +37,42 @@ pub async fn init_database() {
                 deleted BOOLEAN,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );", &[]).await.expect("cannot create postgres connection");
-        },
+            );",
+                    &[],
+                )
+                .await
+                .expect("cannot create postgres connection");
+
+            // Create the `cash_inventory` table
+            client
+                .execute(
+                    "
+              CREATE TABLE IF NOT EXISTS cash_inventory (
+                id INTEGER PRIMARY KEY,
+                coin_1 INTEGER,
+                coin_5 INTEGER,
+                coin_10 INTEGER,
+                bank_20 INTEGER,
+                bank_50 INTEGER,
+                bank_100 INTEGER,
+                bank_500 INTEGER,
+                bank_1000 INTEGER
+            );",
+                    &[],
+                )
+                .await
+                .expect("cannot create postgres connection");
+            client
+                .execute(
+                    "
+              INSERT INTO cash_inventory (id, coin_1, coin_5, coin_10, bank_20, bank_50, bank_100, bank_500, bank_1000)
+              VALUES (0, 0, 0, 0, 0, 0, 0, 0, 0)
+              ON CONFLICT (id) DO NOTHING;
+        ", &[]
+                )
+                .await
+                .expect("cannot create postgres connection");
+        }
         Err(e) => panic!("{}", e),
     }
 }
