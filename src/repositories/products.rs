@@ -1,5 +1,7 @@
 use crate::config::database::db_connect;
-use crate::entities::products::{InsertProductRequest, Product, UpdateProductRequest};
+use crate::entities::products::{
+    InsertProductRequest, Product, RemoveProductQuantityRequest, UpdateProductRequest,
+};
 use bson::oid::ObjectId;
 use chrono::{DateTime, Utc};
 use std::fmt::Debug;
@@ -153,6 +155,33 @@ pub async fn update_product(req: UpdateProductRequest) -> Result<ObjectId, Strin
                     } else {
                         Err("No product found with the given ID".to_string())
                     }
+                }
+                Err(e) => Err(e.to_string()),
+            }
+        }
+        Err(e) => Err(e.to_string()),
+    }
+}
+
+pub async fn remove_product_quantity(
+    req: RemoveProductQuantityRequest,
+) -> Result<ObjectId, String> {
+    match db_connect().await {
+        Ok(client) => {
+            let query = "
+                UPDATE products
+                SET quantity = GREATEST(quantity - $2, 0), updated_at = NOW()
+                WHERE id = $1
+                RETURNING id;
+            ";
+
+            match client
+                .query_one(query, &[&req.id.to_string(), &req.quantity])
+                .await
+            {
+                Ok(row) => {
+                    let id: String = row.get("id");
+                    Ok(ObjectId::parse_str(&id).map_err(|e| e.to_string())?)
                 }
                 Err(e) => Err(e.to_string()),
             }

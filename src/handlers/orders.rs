@@ -1,14 +1,18 @@
 use crate::entities::orders::{
-    CancelOrderRequest, CancelOrderResponse, CreateOrderRequest, CreateOrderResponse,
+    CancelOrderRequest, CancelOrderResponse, CompleteOrderRequest, CompleteOrderResponse,
+    CreateOrderRequest, CreateOrderResponse,
 };
-use crate::repositories::orders::{cancel_order, create_order, get_order, get_orders};
+use crate::repositories::orders::{
+    cancel_order, complete_order, create_order, get_order, get_orders,
+};
 use axum::http::StatusCode;
 use axum::{
     extract::{Json, Path},
     response::{IntoResponse, Response},
 };
+use serde::Serialize;
 
-pub async fn get_order_router(Path(id): Path<String>)-> Result<Response, StatusCode>{
+pub async fn get_order_router(Path(id): Path<String>) -> Result<Response, StatusCode> {
     match get_order(id).await {
         Ok(order) => Ok(Json(order).into_response()),
         Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
@@ -51,5 +55,38 @@ pub async fn cancel_order_router(
         })
         .into_response()),
         Err(_err) => Ok(StatusCode::INTERNAL_SERVER_ERROR.into_response()),
+    }
+}
+
+#[derive(Serialize)]
+struct ErrResponse {
+    message: String,
+}
+
+pub async fn complete_order_router(
+    Json(req): Json<CompleteOrderRequest>,
+) -> Result<Response, StatusCode> {
+    match complete_order(CompleteOrderRequest {
+        id: req.id.clone(),
+        receive: req.receive.clone(),
+    })
+    .await
+    {
+        Ok(change) => {
+            let order = get_order(req.id.clone()).await.unwrap();
+
+            Ok(Json(CompleteOrderResponse {
+                id: req.id.clone(),
+                total: order.total.clone(),
+                receive: req.receive,
+                change,
+            })
+            .into_response())
+        }
+        Err(e) => Ok(Json(ErrResponse {
+            message: e.to_string(),
+        })
+        .into_response()),
+        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
     }
 }

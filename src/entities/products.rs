@@ -37,6 +37,11 @@ pub struct UpdateProductRequest {
     pub deleted: Option<bool>,
 }
 
+pub struct RemoveProductQuantityRequest {
+    pub id: String,
+    pub quantity: i32,
+}
+
 
 #[derive(Serialize)]
 pub struct ProductResponse {

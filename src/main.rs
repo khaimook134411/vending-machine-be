@@ -1,15 +1,26 @@
 pub mod config;
-mod init_database;
 mod entities;
-mod repositories;
 mod handlers;
+mod init_database;
+mod repositories;
 
-use axum::{http::Method, routing::{get, post}, Router};
-use tower_http::cors::{Any, CorsLayer};
 use crate::handlers::cash_inventory::{get_cash_inventory_router, update_cash_inventory_router};
-use crate::handlers::categories::{create_category_router, get_categories_router, update_category_router};
-use crate::handlers::orders::{cancel_order_router, create_order_router, get_order_router, get_orders_router};
-use crate::handlers::products::{create_product_router, get_product_router, get_products_router, update_product_router};
+use crate::handlers::categories::{
+    create_category_router, get_categories_router, update_category_router,
+};
+use crate::handlers::orders::{
+    cancel_order_router, complete_order_router, create_order_router, get_order_router,
+    get_orders_router,
+};
+use crate::handlers::products::{
+    create_product_router, get_product_router, get_products_router, update_product_router,
+};
+use axum::{
+    http::Method,
+    routing::{get, post},
+    Router,
+};
+use tower_http::cors::{Any, CorsLayer};
 
 async fn start_server() {
     let app = Router::new()
@@ -33,6 +44,7 @@ async fn start_server() {
         .route("/orders/:id", get(get_order_router))
         .route("/order/create", post(create_order_router))
         .route("/order/cancel", post(cancel_order_router))
+        .route("/order/complete", post(complete_order_router))
         .route("/", get(|| async { "Hello, World!" }));
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();

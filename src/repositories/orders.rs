@@ -1,6 +1,11 @@
 use crate::config::database::db_connect;
-use crate::entities::orders::{CancelOrderRequest, CreateOrderRequest, Order};
-use crate::repositories::products::get_product;
+use crate::entities::cash_inventory::CashInventory;
+use crate::entities::orders::{
+    CancelOrderRequest, CompleteOrderRequest, CreateOrderRequest, Money, Order,
+};
+use crate::entities::products::RemoveProductQuantityRequest;
+use crate::repositories::cash_inventory::get_cash_inventory;
+use crate::repositories::products::{get_product, remove_product_quantity, update_product};
 use bson::oid::ObjectId;
 use chrono::Utc;
 
@@ -103,5 +108,116 @@ pub async fn cancel_order(req: CancelOrderRequest) -> Result<String, String> {
             }
         }
         Err(e) => Err(e.to_string()),
+    }
+}
+
+pub async fn complete_order(req: CompleteOrderRequest) -> Result<Money, String> {
+    match db_connect().await {
+        Ok(client) => {
+            let order = get_order(req.id.clone()).await.unwrap();
+            let change = order.total.clone() - sum_money(req.receive.clone());
+            let breakdown_change = breakdown_change_into_money(change.clone());
+            let cash_inventory = get_cash_inventory().await;
+            let has_enough_change =
+                check_has_enough_change(breakdown_change.clone(), cash_inventory.unwrap());
+            let status = if has_enough_change {
+                "COMPLETED".to_string()
+            } else {
+                "CANCELLED".to_string()
+            };
+
+            let query = "
+                UPDATE orders
+                SET
+                    status = $2
+                WHERE id = $1;
+            ";
+
+            if has_enough_change {
+                remove_product_quantity(RemoveProductQuantityRequest {
+                    id: req.id.clone(),
+                    quantity: order.quantity.clone(),
+                })
+                .await
+                .expect("TODO: panic message");
+            } else {
+                return Err("Order not completed".to_string());
+            };
+
+            match client.execute(query, &[&req.id, &status]).await {
+                Ok(rows_updated) => Ok(breakdown_change),
+                Err(e) => Err(e.to_string()),
+            }
+        }
+        Err(e) => return Err(e.to_string()),
+    }
+}
+
+fn check_has_enough_change(change: Money, cash_inventory: CashInventory) -> bool {
+    // TODO: improve function
+    change.coin_1 <= cash_inventory.coin_1
+        && change.coin_5 <= cash_inventory.coin_5
+        && change.coin_10 <= cash_inventory.coin_10
+        && change.bank_20 <= cash_inventory.bank_20
+        && change.bank_50 <= cash_inventory.bank_50
+        && change.bank_100 <= cash_inventory.bank_100
+        && change.bank_500 <= cash_inventory.bank_500
+        && change.bank_1000 <= cash_inventory.bank_1000
+}
+
+fn sum_money(money: Money) -> f64 {
+    (money.coin_1 as f64 * 0.01)
+        + (money.coin_5 as f64 * 0.05)
+        + (money.coin_10 as f64 * 0.10)
+        + (money.bank_20 as f64 * 20.0)
+        + (money.bank_50 as f64 * 50.0)
+        + (money.bank_100 as f64 * 100.0)
+        + (money.bank_500 as f64 * 500.0)
+        + (money.bank_1000 as f64 * 1000.0)
+}
+
+pub fn breakdown_change_into_money(mut change: f64) -> Money {
+    const COIN_1: f64 = 0.01;
+    const COIN_5: f64 = 0.05;
+    const COIN_10: f64 = 0.10;
+    const BANK_20: f64 = 20.0;
+    const BANK_50: f64 = 50.0;
+    const BANK_100: f64 = 100.0;
+    const BANK_500: f64 = 500.0;
+    const BANK_1000: f64 = 1000.0;
+
+    // Calculate how many units fit for each denomination
+    let bank_1000 = (change / BANK_1000).floor() as i32;
+    change -= bank_1000 as f64 * BANK_1000;
+
+    let bank_500 = (change / BANK_500).floor() as i32;
+    change -= bank_500 as f64 * BANK_500;
+
+    let bank_100 = (change / BANK_100).floor() as i32;
+    change -= bank_100 as f64 * BANK_100;
+
+    let bank_50 = (change / BANK_50).floor() as i32;
+    change -= bank_50 as f64 * BANK_50;
+
+    let bank_20 = (change / BANK_20).floor() as i32;
+    change -= bank_20 as f64 * BANK_20;
+
+    let coin_10 = (change / COIN_10).floor() as i32;
+    change -= coin_10 as f64 * COIN_10;
+
+    let coin_5 = (change / COIN_5).floor() as i32;
+    change -= coin_5 as f64 * COIN_5;
+
+    let coin_1 = (change / COIN_1).round() as i32;
+
+    Money {
+        coin_1,
+        coin_5,
+        coin_10,
+        bank_20,
+        bank_50,
+        bank_100,
+        bank_500,
+        bank_1000,
     }
 }
