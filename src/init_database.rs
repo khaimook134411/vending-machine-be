@@ -26,7 +26,7 @@ pub async fn init_database() {
                 description VARCHAR(255),
                 price DOUBLE PRECISION,
                 quantity INTEGER,
-                image_url VARCHAR(255),
+                image_uri VARCHAR(255),
                 deleted BOOLEAN,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

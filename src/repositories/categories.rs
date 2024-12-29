@@ -5,7 +5,7 @@ use crate::entities::categories::{Category, InsertCategoryRequest, UpdateCategor
 pub async fn get_categories() -> Result<Vec<Category>, String> {
     match db_connect().await {
         Ok(client) => {
-            let query = "SELECT id, title, description FROM categories";
+            let query = "SELECT * FROM categories";
 
             match client.query(query, &[]).await {
                 Ok(rows) => {

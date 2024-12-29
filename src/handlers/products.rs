@@ -4,7 +4,18 @@ use axum::{
 };
 use axum::http::StatusCode;
 use crate::entities::products::{InsertProductRequest, InsertProductResponse};
-use crate::repositories::products::create_product;
+use crate::repositories::products::{create_product, get_products};
+
+pub async fn get_products_router() -> Result<Response, StatusCode> {
+    match get_products().await {
+        Ok(products) => {
+            Ok(Json(products).into_response())
+        }
+        Err(_) => {
+            Err(StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
+}
 
 pub async fn create_product_router(Json(req): Json<InsertProductRequest>
 ) -> Result<Response, StatusCode> {
