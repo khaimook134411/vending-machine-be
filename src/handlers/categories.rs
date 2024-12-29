@@ -27,7 +27,7 @@ pub async fn create_category_router(Json(req): Json<InsertCategoryRequest>
         Ok(id) => {
             Ok(Json(CategoryResponse {
                 id,
-            }).into_response().into_response())
+            }).into_response())
         }
         Err(_err) => {
             Ok(StatusCode::INTERNAL_SERVER_ERROR.into_response())
@@ -45,7 +45,7 @@ pub async  fn update_category_router(Json(req): Json<UpdateCategoryRequest>) -> 
         Ok(id) => {
             Ok(Json(CategoryResponse {
                 id,
-            }).into_response().into_response())
+            }).into_response())
         }
         Err(_err) => {
             Ok(StatusCode::INTERNAL_SERVER_ERROR.into_response())

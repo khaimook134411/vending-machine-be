@@ -33,7 +33,7 @@ pub async fn create_product_router(
     })
     .await
     {
-        Ok(id) => Ok(Json(ProductResponse { id }).into_response().into_response()),
+        Ok(id) => Ok(Json(ProductResponse { id }).into_response()),
         Err(_err) => Ok(StatusCode::INTERNAL_SERVER_ERROR.into_response()),
     }
 }
@@ -53,7 +53,7 @@ pub async fn update_product_router(
     })
     .await
     {
-        Ok(id) => Ok(Json(ProductResponse { id }).into_response().into_response()),
+        Ok(id) => Ok(Json(ProductResponse { id }).into_response()),
         Err(_err) => Ok(StatusCode::INTERNAL_SERVER_ERROR.into_response()),
     }
 }

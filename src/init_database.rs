@@ -72,6 +72,24 @@ pub async fn init_database() {
                 )
                 .await
                 .expect("cannot create postgres connection");
+
+            // Create the `orders` table
+            client
+                .execute(
+                    "
+            CREATE TABLE IF NOT EXISTS orders (
+                id VARCHAR(255) PRIMARY KEY,
+                product_id VARCHAR(255) NOT NULL,
+                quantity INTEGER NOT NULL,
+                total DOUBLE PRECISION NOT NULL,
+                status VARCHAR(255) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );",
+                    &[],
+                )
+                .await
+                .expect("cannot create orders table");
         }
         Err(e) => panic!("{}", e),
     }
