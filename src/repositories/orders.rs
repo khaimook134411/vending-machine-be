@@ -1,5 +1,5 @@
 use crate::config::database::db_connect;
-use crate::entities::orders::CreateOrderRequest;
+use crate::entities::orders::{CancelOrderRequest, CreateOrderRequest};
 use crate::repositories::products::get_product;
 use bson::oid::ObjectId;
 use chrono::Utc;
@@ -36,4 +36,26 @@ fn generate_order_id() -> String {
     let date_prefix = Utc::now().format("%Y%m%d").to_string();
     let object_id = ObjectId::new().to_hex();
     format!("{}{}", date_prefix, object_id)
+}
+
+pub async fn cancel_order(req: CancelOrderRequest) -> Result<String, String> {
+    match db_connect().await {
+        Ok(client) => {
+            let query = "
+                UPDATE orders
+                SET
+                    status = 'CANCELLED'
+                WHERE id = $1;
+            ";
+
+            match client
+                .execute(query, &[&req.id])
+                .await
+            {
+                Ok(rows_updated) => Ok(req.id),
+                Err(e) => Err(e.to_string()),
+            }
+        }
+        Err(e) => Err(e.to_string()),
+    }
 }

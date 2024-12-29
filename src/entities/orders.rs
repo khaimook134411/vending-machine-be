@@ -59,6 +59,21 @@ pub struct Money {
     pub bank_1000: i32,
 }
 
+impl Money {
+    pub(crate) fn clone(&self) -> Money {
+        Money {
+            coin_1: self.coin_1.clone(),
+            coin_5: self.coin_5.clone(),
+            coin_10: self.coin_10.clone(),
+            bank_20: self.bank_20.clone(),
+            bank_50: self.bank_50.clone(),
+            bank_100: self.bank_100.clone(),
+            bank_500: self.bank_500.clone(),
+            bank_1000: self.bank_1000.clone(),
+        }
+    }
+}
+
 impl Order {
     pub fn new() -> Self {
         Order {

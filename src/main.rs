@@ -10,7 +10,7 @@ use bluepi_assignment_be::handlers::cash_inventory::get_cash_inventory_router;
 use bluepi_assignment_be::handlers::categories::{get_categories_router, update_category_router};
 use crate::handlers::cash_inventory::update_cash_inventory_router;
 use crate::handlers::categories::create_category_router;
-use crate::handlers::orders::create_order_router;
+use crate::handlers::orders::{cancel_order_router, create_order_router};
 use crate::handlers::products::{create_product_router, get_product_router, get_products_router, update_product_router};
 
 async fn start_server() {
@@ -32,6 +32,7 @@ async fn start_server() {
         .route("/cash_inventory", get(get_cash_inventory_router))
         .route("/cash_inventory/update", post(update_cash_inventory_router))
         .route("/order/create", post(create_order_router))
+        .route("/order/cancel", post(cancel_order_router))
         .route("/", get(|| async { "Hello, World!" }));
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
