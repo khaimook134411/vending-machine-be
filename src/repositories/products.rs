@@ -54,7 +54,7 @@ pub async fn get_products() -> Result<Vec<Product>, String> {
                         .map(|row| Product {
                             id: row.get("id"),
                             title: row.get("title"),
-                            category_id: "".to_string(),
+                            category_id: row.get("category_id"),
                             description: row.get("description"),
                             price: row.get("price"),
                             quantity: row.get("quantity"),

@@ -1,9 +1,35 @@
 use crate::config::database::db_connect;
-use crate::entities::orders::{CancelOrderRequest, CreateOrderRequest};
+use crate::entities::orders::{CancelOrderRequest, CreateOrderRequest, Order};
 use crate::repositories::products::get_product;
 use bson::oid::ObjectId;
 use chrono::Utc;
 
+pub async fn get_orders() -> Result<Vec<Order>, String> {
+    match db_connect().await {
+        Ok(client) => {
+            let query = "SELECT * FROM orders";
+
+            match client.query(query, &[]).await {
+                Ok(rows) => {
+                    let orders: Vec<Order> = rows
+                        .into_iter()
+                        .map(|row| Order {
+                            id: row.get("id"),
+                            product_id: row.get("product_id"),
+                            quantity: row.get("quantity"),
+                            total: row.get("total"),
+                            status: row.get("status"),
+                        })
+                        .collect();
+
+                    Ok(orders)
+                }
+                Err(e) => Err(e.to_string()),
+            }
+        }
+        Err(e) => Err(e.to_string()),
+    }
+}
 pub async fn create_order(req: CreateOrderRequest) -> Result<String, String> {
     match db_connect().await {
         Ok(client) => {
@@ -48,10 +74,7 @@ pub async fn cancel_order(req: CancelOrderRequest) -> Result<String, String> {
                 WHERE id = $1;
             ";
 
-            match client
-                .execute(query, &[&req.id])
-                .await
-            {
+            match client.execute(query, &[&req.id]).await {
                 Ok(rows_updated) => Ok(req.id),
                 Err(e) => Err(e.to_string()),
             }
