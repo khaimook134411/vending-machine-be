@@ -1,10 +1,9 @@
-use std::fmt::Debug;
 use crate::config::database::db_connect;
-use crate::entities::products::{InsertProductRequest, Product};
+use crate::entities::products::{InsertProductRequest, Product, UpdateProductRequest};
 use bson::oid::ObjectId;
-use std::time::SystemTime;
 use chrono::{DateTime, Utc};
-
+use std::fmt::Debug;
+use std::time::SystemTime;
 
 pub async fn get_products() -> Result<Vec<Product>, String> {
     match db_connect().await {
@@ -71,6 +70,53 @@ pub async fn create_product(req: InsertProductRequest) -> Result<ObjectId, Strin
                 .await
             {
                 Ok(..) => Ok(id),
+                Err(e) => Err(e.to_string()),
+            }
+        }
+        Err(e) => Err(e.to_string()),
+    }
+}
+
+pub async fn update_product(req: UpdateProductRequest) -> Result<ObjectId, String> {
+    match db_connect().await {
+        Ok(client) => {
+            let query = "
+                UPDATE products
+                SET
+                    title = COALESCE($2, title),
+                    category_id = COALESCE($3, category_id),
+                    description = COALESCE($4, description),
+                    price = COALESCE($5, price),
+                    quantity = COALESCE($6, quantity),
+                    image_uri = COALESCE($7, image_uri),
+                    deleted = COALESCE($8, deleted),
+                    updated_at = NOW()
+                WHERE id = $1;
+            ";
+
+            match client
+                .execute(
+                    query,
+                    &[
+                        &req.id.to_string(),
+                        &req.title,
+                        &req.category_id,
+                        &req.description,
+                        &req.price,
+                        &req.quantity,
+                        &req.image_uri,
+                        &req.deleted,
+                    ],
+                )
+                .await
+            {
+                Ok(rows_updated) => {
+                    if rows_updated > 0 {
+                        Ok(req.id.parse().unwrap())
+                    } else {
+                        Err("No product found with the given ID".to_string())
+                    }
+                }
                 Err(e) => Err(e.to_string()),
             }
         }

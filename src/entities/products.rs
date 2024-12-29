@@ -25,8 +25,21 @@ pub struct InsertProductRequest {
     pub image_uri: Option<String>,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdateProductRequest {
+    pub id: String,
+    pub title: Option<String>,
+    pub category_id: Option<String>,
+    pub description: Option<String>,
+    pub price: Option<f64>,
+    pub quantity: Option<i32>,
+    pub image_uri: Option<String>,
+    pub deleted: Option<bool>,
+}
+
+
 #[derive(Serialize)]
-pub struct InsertProductResponse {
+pub struct ProductResponse {
     pub id: ObjectId,
 }
 
