@@ -23,14 +23,14 @@ use axum::{
 use tower_http::cors::{Any, CorsLayer};
 
 async fn start_server() {
+    // Define the CORS configuration
+    let cors = CorsLayer::new()
+        .allow_origin(Any) // Allow all origins
+        .allow_methods(Any) // Allow all HTTP methods
+        .allow_headers(Any); // Allow all headers
+
+    // Build the application router
     let app = Router::new()
-        .layer(CorsLayer::new().allow_origin(Any).allow_methods([
-            Method::GET,
-            Method::POST,
-            Method::DELETE,
-            Method::PUT,
-            Method::PATCH,
-        ]))
         .route("/categories", get(get_categories_router))
         .route("/category/create", post(create_category_router))
         .route("/category/update", post(update_category_router))
@@ -45,8 +45,10 @@ async fn start_server() {
         .route("/order/create", post(create_order_router))
         .route("/order/cancel", post(cancel_order_router))
         .route("/order/complete", post(complete_order_router))
-        .route("/", get(|| async { "Hello, World!" }));
+        .route("/", get(|| async { "Hello, World!" }))
+        .layer(cors); // Apply CORS as a global layer
 
+    // Bind to the address and serve
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }

@@ -91,6 +91,6 @@ pub async fn init_database() {
                 .await
                 .expect("cannot create orders table");
         }
-        Err(e) => panic!("{}", e),
+        Err(e) => panic!("test test {}", e),
     }
 }

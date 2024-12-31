@@ -17,3 +17,7 @@ tracing = "0.1"
 tower-http = { version = "0.6", features = ["full"] }
 bson = "2.6"
 chrono = "0.4"
+
+[[bin]]
+name = "bluepi-assignment-be"
+path = "src/main.rs"
