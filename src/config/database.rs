@@ -2,7 +2,7 @@ use tokio_postgres::{NoTls, Error, Client};
 
 pub async fn db_connect() -> Result<Client, Error> {
     let (client, connection) = tokio_postgres::connect(
-        "host=vending_postgres user=postgres password=password dbname=vending_machine port=5432",
+        "host=localhost user=postgres password=password dbname=vending_machine port=5433",
         NoTls,
     ).await?;
 

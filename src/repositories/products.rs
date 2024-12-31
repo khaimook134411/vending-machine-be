@@ -172,16 +172,18 @@ pub async fn remove_product_quantity(
                 UPDATE products
                 SET quantity = GREATEST(quantity - $2, 0), updated_at = NOW()
                 WHERE id = $1
-                RETURNING id;
-            ";
+            ;";
 
             match client
-                .query_one(query, &[&req.id.to_string(), &req.quantity])
+                .execute(query, &[&req.id.to_string(), &req.quantity])
                 .await
             {
-                Ok(row) => {
-                    let id: String = row.get("id");
-                    Ok(ObjectId::parse_str(&id).map_err(|e| e.to_string())?)
+                Ok(rows_affected) => {
+                    if rows_affected == 1 {
+                        Ok(req.id.parse().unwrap())
+                    } else {
+                        Err("No product found with the given ID.".to_string())
+                    }
                 }
                 Err(e) => Err(e.to_string()),
             }
@@ -189,3 +191,4 @@ pub async fn remove_product_quantity(
         Err(e) => Err(e.to_string()),
     }
 }
+

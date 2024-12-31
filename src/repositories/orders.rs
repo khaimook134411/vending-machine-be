@@ -119,7 +119,7 @@ pub async fn complete_order(req: CompleteOrderRequest) -> Result<Money, String> 
             let breakdown_change = breakdown_change_into_money(change.clone());
             let cash_inventory = get_cash_inventory().await;
             let has_enough_change =
-                check_has_enough_change(breakdown_change.clone(), cash_inventory.unwrap());
+                check_has_enough_change(change as i32, cash_inventory.unwrap());
             let status = if has_enough_change {
                 "COMPLETED".to_string()
             } else {
@@ -135,7 +135,7 @@ pub async fn complete_order(req: CompleteOrderRequest) -> Result<Money, String> 
 
             if has_enough_change {
                 remove_product_quantity(RemoveProductQuantityRequest {
-                    id: req.id.clone(),
+                    id: order.product_id.clone(),
                     quantity: order.quantity.clone(),
                 })
                 .await
@@ -153,17 +153,45 @@ pub async fn complete_order(req: CompleteOrderRequest) -> Result<Money, String> 
     }
 }
 
-fn check_has_enough_change(change: Money, cash_inventory: CashInventory) -> bool {
-    // TODO: improve function
-    change.coin_1 <= cash_inventory.coin_1
-        && change.coin_5 <= cash_inventory.coin_5
-        && change.coin_10 <= cash_inventory.coin_10
-        && change.bank_20 <= cash_inventory.bank_20
-        && change.bank_50 <= cash_inventory.bank_50
-        && change.bank_100 <= cash_inventory.bank_100
-        && change.bank_500 <= cash_inventory.bank_500
-        && change.bank_1000 <= cash_inventory.bank_1000
+// fn check_has_enough_change(change: Money, cash_inventory: CashInventory) -> bool {
+//     // TODO: improve function
+//     change.coin_1 <= cash_inventory.coin_1
+//         && change.coin_5 <= cash_inventory.coin_5
+//         && change.coin_10 <= cash_inventory.coin_1
+//         && change.bank_20 <= cash_inventory.bank_20
+//         && change.bank_50 <= cash_inventory.bank_50
+//         && change.bank_100 <= cash_inventory.bank_100
+//         && change.bank_500 <= cash_inventory.bank_500
+//         && change.bank_1000 <= cash_inventory.bank_1000
+// }
+fn check_has_enough_change(change: i32, cash_inventory: CashInventory) -> bool {
+    let denominations = [
+        (1000, cash_inventory.bank_1000),
+        (500, cash_inventory.bank_500),
+        (100, cash_inventory.bank_100),
+        (50, cash_inventory.bank_50),
+        (20, cash_inventory.bank_20),
+        (10, cash_inventory.coin_10),
+        (5, cash_inventory.coin_5),
+        (1, cash_inventory.coin_1),
+    ];
+
+    let mut remaining_change = change;
+
+    for (denom, available) in denominations.iter() {
+        // Dereference `available` to get the value
+        let available_value = *available; // Dereferencing here
+        let count = remaining_change / (denom.min(&available_value));
+        remaining_change -= count * denom;
+
+        if remaining_change == 0 {
+            return true;  // Successfully made the change
+        }
+    }
+
+    remaining_change == 0  // If all the required change has been covered
 }
+
 
 fn sum_money(money: Money) -> f64 {
     (money.coin_1 as f64 * 0.01)
