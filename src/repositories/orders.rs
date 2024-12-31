@@ -115,11 +115,10 @@ pub async fn complete_order(req: CompleteOrderRequest) -> Result<Money, String> 
     match db_connect().await {
         Ok(client) => {
             let order = get_order(req.id.clone()).await.unwrap();
-            let change = order.total.clone() - sum_money(req.receive.clone());
+            let change = sum_money(req.receive.clone()) - order.total.clone();
             let breakdown_change = breakdown_change_into_money(change.clone());
             let cash_inventory = get_cash_inventory().await;
-            let has_enough_change =
-                check_has_enough_change(change as i32, cash_inventory.unwrap());
+            let has_enough_change = check_has_enough_change(change as i32, cash_inventory.unwrap());
             let status = if has_enough_change {
                 "COMPLETED".to_string()
             } else {
@@ -153,17 +152,6 @@ pub async fn complete_order(req: CompleteOrderRequest) -> Result<Money, String> 
     }
 }
 
-// fn check_has_enough_change(change: Money, cash_inventory: CashInventory) -> bool {
-//     // TODO: improve function
-//     change.coin_1 <= cash_inventory.coin_1
-//         && change.coin_5 <= cash_inventory.coin_5
-//         && change.coin_10 <= cash_inventory.coin_1
-//         && change.bank_20 <= cash_inventory.bank_20
-//         && change.bank_50 <= cash_inventory.bank_50
-//         && change.bank_100 <= cash_inventory.bank_100
-//         && change.bank_500 <= cash_inventory.bank_500
-//         && change.bank_1000 <= cash_inventory.bank_1000
-// }
 fn check_has_enough_change(change: i32, cash_inventory: CashInventory) -> bool {
     let denominations = [
         (1000, cash_inventory.bank_1000),
@@ -185,13 +173,12 @@ fn check_has_enough_change(change: i32, cash_inventory: CashInventory) -> bool {
         remaining_change -= count * denom;
 
         if remaining_change == 0 {
-            return true;  // Successfully made the change
+            return true; // Successfully made the change
         }
     }
 
-    remaining_change == 0  // If all the required change has been covered
+    remaining_change == 0 // If all the required change has been covered
 }
-
 
 fn sum_money(money: Money) -> f64 {
     (money.coin_1 as f64 * 0.01)
@@ -205,47 +192,33 @@ fn sum_money(money: Money) -> f64 {
 }
 
 pub fn breakdown_change_into_money(mut change: f64) -> Money {
-    const COIN_1: f64 = 0.01;
-    const COIN_5: f64 = 0.05;
-    const COIN_10: f64 = 0.10;
-    const BANK_20: f64 = 20.0;
-    const BANK_50: f64 = 50.0;
-    const BANK_100: f64 = 100.0;
-    const BANK_500: f64 = 500.0;
-    const BANK_1000: f64 = 1000.0;
+    const DENOMINATIONS: &[(f64, fn(&mut Money, i32))] = &[
+        (1000.0, |m, count| m.bank_1000 = count),
+        (500.0, |m, count| m.bank_500 = count),
+        (100.0, |m, count| m.bank_100 = count),
+        (50.0, |m, count| m.bank_50 = count),
+        (20.0, |m, count| m.bank_20 = count),
+        (10.0, |m, count| m.coin_10 = count),
+        (5.0, |m, count| m.coin_5 = count),
+        (1.0, |m, count| m.coin_1 = count),
+    ];
 
-    // Calculate how many units fit for each denomination
-    let bank_1000 = (change / BANK_1000).floor() as i32;
-    change -= bank_1000 as f64 * BANK_1000;
+    let mut result = Money {
+        coin_1: 0,
+        coin_5: 0,
+        coin_10: 0,
+        bank_20: 0,
+        bank_50: 0,
+        bank_100: 0,
+        bank_500: 0,
+        bank_1000: 0,
+    };
 
-    let bank_500 = (change / BANK_500).floor() as i32;
-    change -= bank_500 as f64 * BANK_500;
-
-    let bank_100 = (change / BANK_100).floor() as i32;
-    change -= bank_100 as f64 * BANK_100;
-
-    let bank_50 = (change / BANK_50).floor() as i32;
-    change -= bank_50 as f64 * BANK_50;
-
-    let bank_20 = (change / BANK_20).floor() as i32;
-    change -= bank_20 as f64 * BANK_20;
-
-    let coin_10 = (change / COIN_10).floor() as i32;
-    change -= coin_10 as f64 * COIN_10;
-
-    let coin_5 = (change / COIN_5).floor() as i32;
-    change -= coin_5 as f64 * COIN_5;
-
-    let coin_1 = (change / COIN_1).round() as i32;
-
-    Money {
-        coin_1,
-        coin_5,
-        coin_10,
-        bank_20,
-        bank_50,
-        bank_100,
-        bank_500,
-        bank_1000,
+    for &(denomination, setter) in DENOMINATIONS {
+        let count = (change / denomination).floor() as i32;
+        change -= count as f64 * denomination;
+        setter(&mut result, count);
     }
+
+    result
 }
